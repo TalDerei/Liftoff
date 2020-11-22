@@ -9,23 +9,23 @@ router.post('/',(req,res)=>{
 })
 
 /**
- * Update User given uid
+ * Update Group given gid
  */
-router.put('/:uid',(req,res)=>{
+router.put('/:gid',(req,res)=>{
 
 })
 
 /**
- * Get User given uid
+ * Get Group given gid
  */
-router.get('/:uid',(req,res)=>{
+router.get('/:gid',(req,res)=>{
 
 })
 
 /**
- * Delete User given uid
+ * Delete Group given gid
  */
-router.delete('/:uid',(req,res)=>{
+router.delete('/:gid',(req,res)=>{
 
 })
 
