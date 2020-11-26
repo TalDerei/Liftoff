@@ -9,8 +9,8 @@ router.post('/', (req, res) => {
     let data = req.body;
 
     //check JSON
-    if (data.uid && data.email && data.name && data.info) {
-        db.query('INSERT INTO users(uid,email,name,info) VALUES($1,$2,$3,$4) RETURNING *', [data.uid, data.email, data.name, data.ingo], (err, res) => {
+    if (data.username && data.email && data.name) {
+        db.query('INSERT INTO users(username,email,realname) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.realname], (err, res) => {
             if (err) return res.status(500).send(err)
             return res.status(202).send(res.rows[0])
         })
@@ -21,11 +21,11 @@ router.post('/', (req, res) => {
 /**
  * Update User given uid and JSON
  */
-router.put('/:uid', (req, res) => {
+router.put('/:username', (req, res) => {
     let data = req.body;
-    let uid = req.params.uid;
-    if (data.uid && data.email && data.name && data.info) {
-        db.query('UPDATE users SET uid=$1,email=$2,name=$3,info=$4 WHERE uid = $5 RETURNING *', [data.uid, data.email, data.name, data.info, uid], (err, response) => {
+    let username = req.params.username;
+    if (data.email && data.realname) {
+        db.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.realname, username], (err, response) => {
             if (err) return res.status(500).send(err)
             return res.status(200).send(response.rows[0])
         })
@@ -36,9 +36,9 @@ router.put('/:uid', (req, res) => {
 /**
  * Get User given uid
  */
-router.get('/:uid', (req, res, next) => {
-    let uid = req.params.uid;
-    db.query('SELECT * FROM users WHERE uid = $1', [uid], (err, response) => {
+router.get('/:username', (req, res, next) => {
+    let username = req.params.username;
+    db.query('SELECT * FROM users WHERE username = $1', [username], (err, response) => {
         if (err) return res.status(500).send(err)
         return res.status(200).send(res.rows[0])
     })
@@ -47,9 +47,9 @@ router.get('/:uid', (req, res, next) => {
 /**
  * Delete User given uid
  */
-router.delete('/:uid', (req, res) => {
-    let uid = req.params.uid;
-    db.query('DELETE FROM users WHERE uid = $1', [uid], (err, response) => {
+router.delete('/:username', (req, res) => {
+    let username = req.params.username;
+    db.query('DELETE FROM users WHERE username = $1', [username], (err, response) => {
         if (err) return res.status(500).send(err)
         return res.status(200).send();
     })
