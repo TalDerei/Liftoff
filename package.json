@@ -11,6 +11,9 @@
 		"Alan Zara <aez222@lehigh.edu>"
 	],
 	"main": "index.js",
+	"bin": {
+		"lehigh-liftoff": "./index.js"
+	},
 	"scripts": {
 		"dev": "nodemon ./index.js",
 		"start": "node ./index.js",
