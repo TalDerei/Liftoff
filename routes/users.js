@@ -1,58 +1,66 @@
+/* routes associated with users */
+
 const express = require('express');
 const router = express.Router();
-const db = require('../index.js'); //FIXME: probably change this to wherever db was made
 
-/**
- * Create new User given JSON
- */
+// use node-postgres module to create a pool of connections w/ environment variables stored off-repo
+const Pool = require('pg').Pool;
+const pool = new Pool();
+
+// connect to database instance
+pool.connect();
+
+// POST /users -- create new user in database
 router.post('/', (req, res) => {
     let data = req.body;
-
-    //check JSON
-    if (data.username && data.email && data.name) {
-        db.query('INSERT INTO users(username,email,realname) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.realname], (err, res) => {
-            if (err) return res.status(500).send(err)
-            return res.status(202).send(res.rows[0])
-        })
+    if (data.username && data.email && data.real_name) {
+        pool.query('INSERT INTO users(username,email,real_name) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.real_name], (err, result) => {
+            if (err) {
+                return res.status(500).send(err);
+            }
+            return res.status(202).json(result.rows[0]);
+        });
     }
-    res.status(400).send()//missing fields
-})
+    return res.status(400).send();
+});
 
-/**
- * Update User given uid and JSON
- */
+// PUT /users/[username] -- update user in database associated with username
 router.put('/:username', (req, res) => {
     let data = req.body;
     let username = req.params.username;
-    if (data.email && data.realname) {
-        db.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.realname, username], (err, response) => {
-            if (err) return res.status(500).send(err)
-            return res.status(200).send(response.rows[0])
-        })
+    if (data.email && data.real_name) {
+        pool.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.real_name, username], (err, result) => {
+            if (err) {
+                return res.status(500).send(err);
+            }
+            return res.status(200).json(result.rows[0]);
+        });
     }
-    res.status(400).send()//missing fields
-})
+    res.status(400).send();
+});
 
-/**
- * Get User given uid
- */
+// GET /users/[username] -- get user in database associated with username
 router.get('/:username', (req, res, next) => {
     let username = req.params.username;
-    db.query('SELECT * FROM users WHERE username = $1', [username], (err, response) => {
-        if (err) return res.status(500).send(err)
-        return res.status(200).send(res.rows[0])
-    })
-})
+    pool.query('SELECT * FROM users WHERE username = $1', [username], (err, result) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+        return res.status(200).json(result.rows[0]);
+    });
+    res.status(400).send();
+});
 
-/**
- * Delete User given uid
- */
+// DELETE /users/[username] -- delete user in database associated with username
 router.delete('/:username', (req, res) => {
     let username = req.params.username;
-    db.query('DELETE FROM users WHERE username = $1', [username], (err, response) => {
-        if (err) return res.status(500).send(err)
+    pool.query('DELETE FROM users WHERE username = $1', [username], (err, result) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
         return res.status(200).send();
-    })
-})
+    });
+    res.status(400).send();
+});
 
 module.exports = router;
