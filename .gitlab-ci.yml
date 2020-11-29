@@ -19,7 +19,7 @@ stages:
 lint_helm:
   image:
     name: alpine/helm:3.4.1
-    entrypoint: /bin/sh
+    entrypoint: [ "/bin/sh" ]
   stage: test
   script:
     - cd chart
@@ -29,7 +29,7 @@ lint_helm:
 package_npm:
   image:
     name: node:15.3.0-alpine-3.12
-    entrypoint: /bin/sh
+    entrypoint: [ "/bin/sh" ]
   stage: package
   only:
     - tags
@@ -40,13 +40,13 @@ package_npm:
   artifacts:
     paths:
       - docker/lehigh-liftoff.tgz
-    expires_in: 20 minutes
+    expire_in: 20 minutes
 
 # Build & publish the Docker/OCI container image using Kaniko:
 publish_container:
   image:
     name: gcr.io/kaniko-project/executor:v1.3.0-debug
-    entrypoint: /busybox/sh
+    entrypoint: [ "/busybox/sh" ]
   stage: publish
   only:
     - tags
@@ -59,7 +59,7 @@ publish_container:
 publish_helm:
   image:
     name: dtzar/helm-kubectl:3.4.0
-    entrypoint: /bin/sh
+    entrypoint: [ "/bin/sh" ]
   stage: publish
   only:
     - tags
@@ -73,7 +73,7 @@ publish_helm:
 deploy_helm_prod:
   image:
     name: dtzar/helm-kubectl:3.4.0
-    entrypoint: /bin/sh
+    entrypoint: [ "/bin/sh" ]
   stage: deploy
   only:
     - tags
