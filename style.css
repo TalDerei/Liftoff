@@ -1,0 +1,30 @@
+:root {
+  --first-color: #502d0e;
+  --second-color: #ffce49;
+}
+
+body {
+  margin: 0;
+  /* background: url('clock.png') no-repeat fixed center; */
+  background-color: var(--first-color);
+}
+
+h1 {
+  text-align: center;
+  color: #ffffff;
+  font-size: 3rem;
+  padding: 1.4rem;
+  margin: 35vh auto;
+  margin-bottom: 25px;
+}
+
+button {
+  display: block;
+  border-radius: 0.6rem;
+  background-color: var(--second-color);
+  text-align: center;
+  font-weight: bold;
+  font-size: 2rem;
+  margin: 0vh auto;
+  padding: 1.6rem;
+}
