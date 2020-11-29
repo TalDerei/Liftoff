@@ -1,0 +1,91 @@
+{{/*
+Defines a deployment for the main API server
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "lehigh-liftoff.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/component: api-server
+    {{- include "lehigh-liftoff.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api-server
+      {{- include "lehigh-liftoff.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app.kubernetes.io/component: api-server
+        {{- include "lehigh-liftoff.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.image.credentials }}
+      imagePullSecrets:
+        - name: '{{ include "lehigh-liftoff.fullname" . }}-pull-creds'
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: '{{ .Values.image.repository }}:{{ printf "%s" .Values.image.tag | default .Chart.AppVersion }}'
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: GOOGLE_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
+                  key: oauth_client_id
+            - name: GOOGLE_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
+                  key: oauth_client_secret
+            - name: GOOGLE_OAUTH_SERVICE_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
+                  key: oauth_service_domain
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
+                  key: jwt_secret
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          {{- if not (eq .Values.disableHealthCheck true) }}
+          livenessProbe:
+            httpGet:
+              path: /api/health/liveness
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/health/readiness
+              port: http
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
