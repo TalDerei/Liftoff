@@ -13,8 +13,8 @@ pool.connect();
 // POST /users -- create new user in database
 router.post('/', (req, res) => {
     let data = req.body;
-    if (data.username && data.email && data.real_name) {
-        pool.query('INSERT INTO users(username,email,real_name) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.real_name], (err, result) => {
+    if (data.username && data.email && data.realname) {
+        pool.query('INSERT INTO users(username,email,realname) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.realname], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
@@ -28,8 +28,8 @@ router.post('/', (req, res) => {
 router.put('/:username', (req, res) => {
     let data = req.body;
     let username = req.params.username;
-    if (data.email && data.real_name) {
-        pool.query('UPDATE users SET email=$1,real_name=$2, WHERE username = $3 RETURNING *', [data.email, data.real_name, username], (err, result) => {
+    if (data.email && data.realname) {
+        pool.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.realname, username], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
