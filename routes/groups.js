@@ -14,7 +14,7 @@ pool.connect();
 router.post('/', (req, res) => {
     let data = req.body;
     if (data.groupname && data.grouptitle) {
-        pool.query('INSERT INTO users(groupname,grouptitle) VALUES($1,$2) RETURNING *', [data.groupname, data.grouptitle], (err, result) => {
+        pool.query('INSERT INTO groups(groupname,grouptitle) VALUES($1,$2) RETURNING *', [data.groupname, data.grouptitle], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
@@ -29,7 +29,7 @@ router.put('/:groupname', (req, res) => {
     let data = req.body;
     let groupname = req.params.groupname;
     if (data.groupname && data.grouptitle) {
-        pool.query('UPDATE users SET groupname=$1,grouptitle=$2, WHERE groupname = $3 RETURNING *', [data.groupname, data.grouptitle], (err, result) => {
+        pool.query('UPDATE groups SET groupname=$1,grouptitle=$2, WHERE groupname = $3 RETURNING *', [data.groupname, data.grouptitle], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
@@ -42,7 +42,7 @@ router.put('/:groupname', (req, res) => {
 // GET /groups/[groupname] -- get group in database associated with groupname
 router.get('/:groupname', (req, res, next) => {
     let groupname = req.params.groupname;
-    pool.query('SELECT * FROM users WHERE groupname = $1', [groupname], (err, result) => {
+    pool.query('SELECT * FROM groups WHERE groupname = $1', [groupname], (err, result) => {
         if (err) {
             return res.status(500).send(err);
         }
@@ -54,7 +54,7 @@ router.get('/:groupname', (req, res, next) => {
 // DELETE /groups/[groupname] -- delete group in database associated with groupname
 router.delete('/:groupname', (req, res) => {
     let groupname = req.params.groupname;
-    pool.query('DELETE FROM users WHERE groupname = $1', [groupname], (err, result) => {
+    pool.query('DELETE FROM groups WHERE groupname = $1', [groupname], (err, result) => {
         if (err) {
             return res.status(500).send(err);
         }

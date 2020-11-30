@@ -29,7 +29,7 @@ router.put('/:username', (req, res) => {
     let data = req.body;
     let username = req.params.username;
     if (data.email && data.real_name) {
-        pool.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.real_name, username], (err, result) => {
+        pool.query('UPDATE users SET email=$1,real_name=$2, WHERE username = $3 RETURNING *', [data.email, data.real_name, username], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
