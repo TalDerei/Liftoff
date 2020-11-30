@@ -29,7 +29,7 @@ router.put('/:groupname', (req, res) => {
     let data = req.body;
     let groupname = req.params.groupname;
     if (data.groupname && data.grouptitle) {
-        pool.query('UPDATE groups SET groupname=$1,grouptitle=$2, WHERE groupname = $3 RETURNING *', [data.groupname, data.grouptitle], (err, result) => {
+        pool.query('UPDATE groups SET groupname=$1,grouptitle=$2, WHERE groupname = $3 RETURNING *', [data.groupname, data.grouptitle,groupname], (err, result) => {
             if (err) {
                 return res.status(500).send(err);
             }
