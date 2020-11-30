@@ -19,12 +19,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true,}));
 
-// routes 
+// routes
 app.use('/users', usersRouter);
 app.use('/groups', groupsRouter)
 
 app.listen(3000, function () {
-    console.log('Server is running.. on Port 3000');
+	console.log('Server is running.. on Port 3000');
 });
 
 module.exports = app;
