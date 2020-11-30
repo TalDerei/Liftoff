@@ -1,0 +1,7 @@
+.gitignore
+.gitlab-ci.yml
+docker
+chart
+
+*.log
+

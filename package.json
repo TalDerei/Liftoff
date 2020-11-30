@@ -1,5 +1,4 @@
 {
-	"private": true,
 	"name": "lehigh-liftoff",
 	"version": "0.0.0",
 	"description": "A platform to match software contributors with projects in need of contribution",
@@ -10,6 +9,9 @@
 		"Buckley Ross <brr322@lehigh.edu>",
 		"Alan Zara <aez222@lehigh.edu>"
 	],
+	"publishConfig": {
+		"registry": "https://nexus.dev.acm.lehigh.edu/repository/npm-hosted/"
+	},
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon ./index.js",

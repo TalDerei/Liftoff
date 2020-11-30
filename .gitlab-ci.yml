@@ -1,0 +1,88 @@
+variables:
+  # Configure the credentials for the cluster & repository:
+  CLUSTER_CA: $CLUSTER_CA
+  CLUSTER_TOKEN: $CLUSTER_TOKEN
+  REPO_USER: $REPO_USER
+  REPO_PASS: $REPO_PASS
+  # Configure the repository URLs with which each script must interact:
+  REPO_URL: https://nexus.dev.acm.lehigh.edu
+  DOCKER_REPO: docker.dev.acm.lehigh.edu/lehigh-liftoff
+
+stages:
+  #- build
+  - test
+  - package
+  - publish
+  - deploy
+
+# Examine the helm chart for errors:
+lint_helm:
+  image:
+    name: alpine/helm:3.4.1
+    entrypoint: [ "/bin/sh" ]
+  stage: test
+  script:
+    - cd chart
+    - helm lint
+
+# Build the NPM package, & deposit the artifact in the build directory
+package_npm:
+  image:
+    name: node:15.3.0-alpine-3.12
+    entrypoint: [ "/bin/sh" ]
+  stage: package
+  only:
+    - tags
+  script:
+    - cd docker
+    - npm pack ../
+    - mv lehigh-liftoff-*.tgz lehigh-liftoff.tgz
+  artifacts:
+    paths:
+      - docker/lehigh-liftoff.tgz
+    expire_in: 20 minutes
+
+# Build & publish the Docker/OCI container image using Kaniko:
+publish_container:
+  image:
+    name: gcr.io/kaniko-project/executor:v1.3.0-debug
+    entrypoint: [ "/busybox/sh" ]
+  stage: publish
+  only:
+    - tags
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"https://docker.dev.acm.lehigh.edu\":{\"username\":\"$REPO_USER\",\"password\":\"$REPO_PASS\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --force --context $CI_PROJECT_DIR/docker --dockerfile $CI_PROJECT_DIR/docker/Dockerfile --destination ${DOCKER_REPO}:latest
+
+# Publish the helm chart:
+publish_helm:
+  image:
+    name: dtzar/helm-kubectl:3.4.0
+    entrypoint: [ "/bin/sh" ]
+  stage: publish
+  only:
+    - tags
+  script:
+    - apk add curl
+    - cd chart
+    - helm package ./
+    - curl -u "${REPO_USER}:${REPO_PASS}" "${REPO_URL}/repository/helm-hosted/" --upload-file lehigh-liftoff-*.tgz -v
+
+# Deploy the helm chart to the production cluster:
+deploy_helm_prod:
+  image:
+    name: dtzar/helm-kubectl:3.4.0
+    entrypoint: [ "/bin/sh" ]
+  stage: deploy
+  only:
+    - tags
+  script:
+    - kubectl config set-cluster prod --server="https://kubernetes.default.svc"
+    - kubectl config set clusters.prod.certificate-authority-data ${CLUSTER_CA}
+    - kubectl config set-credentials gitlab --token="${CLUSTER_TOKEN}"
+    - kubectl config set-context prod --cluster=prod --user=gitlab
+    - kubectl config use-context prod
+    - helm repo add nexus ${REPO_URL}/repository/helm-hosted/ --username $REPO_USER --password $REPO_PASS
+    - helm upgrade -n lehigh-liftoff lehigh-liftoff nexus/lehigh-liftoff --reuse-values
+
