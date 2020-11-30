@@ -86,18 +86,48 @@ spec:
                   name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
                   key: database
           ports:
+            {{- if not (eq .Values.disableHealthCheck true) }}
+            - name: healthz
+              containerPort: 9000
+              protocol: TCP
+            {{- end }}
             - name: http
               containerPort: 8080
               protocol: TCP
           {{- if not (eq .Values.disableHealthCheck true) }}
           livenessProbe:
             httpGet:
-              path: /api/health/liveness
-              port: http
+              path: /live
+              port: healthz
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            # Allow sufficient amount of time (90 seconds = periodSeconds * failureThreshold)
+            # for the registered shutdown handlers to run to completion.
+            periodSeconds: 30
+            successThreshold: 1
+            # Setting a very low timeout value (e.g. 1 second) can cause false-positive
+            # checks and service interruption.
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /api/health/readiness
-              port: http
+              path: /ready
+              port: healthz
+            failureThreshold: 1
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          # Startup probe is only needed when container is taking longer to start than
+          # `initialDelaySeconds + failureThreshold × periodSeconds` of the liveness probe.
+          startupProbe:
+            httpGet:
+              path: /live
+              port: healthz
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
