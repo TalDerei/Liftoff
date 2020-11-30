@@ -28,7 +28,7 @@ lint_helm:
 # Build the NPM package, & deposit the artifact in the build directory
 package_npm:
   image:
-    name: node:15.3.0-alpine-3.12
+    name: node:15.3.0
     entrypoint: [ "/bin/sh" ]
   stage: package
   only:
