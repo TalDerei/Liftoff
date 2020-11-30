@@ -60,6 +60,31 @@ spec:
                 secretKeyRef:
                   name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
                   key: jwt_secret
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
+                  key: user
+            - name: POSTGRES_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
+                  key: password
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
+                  key: host
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
+                  key: port
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
+                  key: database
           ports:
             - name: http
               containerPort: 8080

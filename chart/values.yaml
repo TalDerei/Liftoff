@@ -21,6 +21,14 @@ oauth:
   clientSecret: "[[ CHANGE ME ]]"
   serviceDomain: "[[ CHANGE ME ]]"
 
+# Defines the PostgreSQL credentials:
+postgres:
+  user: "[[ CHANGE ME ]]"
+  password: "[[ CHANGE ME ]]"
+  host: "[[ CHANGE ME ]]"
+  port: "[[ CHANGE ME ]]"
+  database: "[[ CHANGE ME ]]"
+
 nameOverride: ""
 fullnameOverride: ""
 
