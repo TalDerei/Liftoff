@@ -51,6 +51,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Define Common Pod Annotations
+*/}}
+{{- define "lehigh-liftoff.commonAnnotations" -}}
+{{- with .Values.podAnnotations }}
+{{- toYaml . -}}
+{{- end }}
+{{- end }}
+
+{{/*
 Compute the image pull secret
 */}}
 {{- define "lehigh-liftoff.imagePullSecret" -}}
