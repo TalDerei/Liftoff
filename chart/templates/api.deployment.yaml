@@ -19,10 +19,11 @@ spec:
       {{- include "lehigh-liftoff.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- include "lehigh-liftoff.commonAnnotations" . | nindent 8 }}
+        {{- if (eq .Values.api.forceRollout true) }}
+        rolloutTag: {{ randAlphaNum 32 }}
+        {{- end }}
       labels:
         app.kubernetes.io/component: api-server
         {{- include "lehigh-liftoff.selectorLabels" . | nindent 8 }}
@@ -86,7 +87,7 @@ spec:
                   name: '{{- include "lehigh-liftoff.fullname" . }}-pg'
                   key: database
           ports:
-            {{- if not (eq .Values.disableHealthCheck true) }}
+            {{- if not (eq .Values.api.disableHealthCheck true) }}
             - name: healthz
               containerPort: 9000
               protocol: TCP
@@ -94,7 +95,7 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-          {{- if not (eq .Values.disableHealthCheck true) }}
+          {{- if not (eq .Values.api.disableHealthCheck true) }}
           livenessProbe:
             httpGet:
               path: /live

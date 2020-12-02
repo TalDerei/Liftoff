@@ -21,6 +21,7 @@ lint_helm:
     name: alpine/helm:3.4.1
     entrypoint: [ "/bin/sh" ]
   stage: test
+  dependencies: []
   script:
     - cd chart
     - helm lint
@@ -31,8 +32,7 @@ package_npm:
     name: node:15.3.0
     entrypoint: [ "/bin/sh" ]
   stage: package
-  only:
-    - tags
+  dependencies: []
   script:
     - cd docker
     - npm pack ../
@@ -40,7 +40,9 @@ package_npm:
   artifacts:
     paths:
       - docker/lehigh-liftoff.tgz
-    expire_in: 20 minutes
+    expire_in: 45 minutes
+  rules:
+    - if: '$CI_COMMIT_TAG'
 
 # Build & publish the Docker/OCI container image using Kaniko:
 publish_container:
@@ -48,12 +50,14 @@ publish_container:
     name: gcr.io/kaniko-project/executor:v1.3.0-debug
     entrypoint: [ "/busybox/sh" ]
   stage: publish
-  only:
-    - tags
+  dependencies:
+    - package_npm
   script:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"https://docker.dev.acm.lehigh.edu\":{\"username\":\"$REPO_USER\",\"password\":\"$REPO_PASS\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --force --context $CI_PROJECT_DIR/docker --dockerfile $CI_PROJECT_DIR/docker/Dockerfile --destination ${DOCKER_REPO}:latest
+  rules:
+    - if: '$CI_COMMIT_TAG'
 
 # Publish the helm chart:
 publish_helm:
@@ -61,13 +65,14 @@ publish_helm:
     name: dtzar/helm-kubectl:3.4.0
     entrypoint: [ "/bin/sh" ]
   stage: publish
-  only:
-    - tags
+  dependencies: []
   script:
     - apk add curl
     - cd chart
     - helm package ./
     - curl -u "${REPO_USER}:${REPO_PASS}" "${REPO_URL}/repository/helm-hosted/" --upload-file lehigh-liftoff-*.tgz -v
+  rules:
+    - if: '$CI_COMMIT_TAG'
 
 # Deploy the helm chart to the production cluster:
 deploy_helm_prod:
@@ -75,8 +80,7 @@ deploy_helm_prod:
     name: dtzar/helm-kubectl:3.4.0
     entrypoint: [ "/bin/sh" ]
   stage: deploy
-  only:
-    - tags
+  dependencies: []
   script:
     - kubectl config set-cluster prod --server="https://kubernetes.default.svc"
     - kubectl config set clusters.prod.certificate-authority-data ${CLUSTER_CA}
@@ -85,4 +89,6 @@ deploy_helm_prod:
     - kubectl config use-context prod
     - helm repo add nexus ${REPO_URL}/repository/helm-hosted/ --username $REPO_USER --password $REPO_PASS
     - helm upgrade -n lehigh-liftoff lehigh-liftoff nexus/lehigh-liftoff --reuse-values
+  rules:
+    - if: '$CI_COMMIT_TAG'
 
