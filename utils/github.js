@@ -1,6 +1,21 @@
 const fetch = require('node-fetch')
 
-function dataFetch(search){
+//fetch only number of commits and author
+function smallDataFetch(search){
+  return fetch('https://api.github.com/repos/'+search+'/stats/contributors')
+  .then(data=>data.json())
+  .then(data=>{
+      let betterData = []
+      for(i=0; i<data.length; i++){
+          betterData.push({'total':data[i].total,'user':data[i].author.login})
+      }
+      return betterData
+  })
+}
+
+
+//fetch a bunch of stuff
+function bigDataFetch(search){
     //search should be in form ':owner/:repo'
     return fetch('https://api.github.com/repos/'+search+'/commits')
     .then(data=>data.json())
@@ -47,6 +62,6 @@ function dataFetch(search){
   })
 }
 
-//dataFetch('Lehigh-Coders-Community/CSE6cubed').then(data=>{console.log(data)})
+//smallDataFetch('Lehigh-Coders-Community/CSE6cubed').then(data=>{console.log(data)})
 
-module.exports = dataFetch;
+module.exports = smallDataFetch;
