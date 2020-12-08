@@ -1,3 +1,5 @@
+const fetch = require('node-fetch')
+
 function dataFetch(search){
     //search should be in form ':owner/:repo'
     return fetch('https://api.github.com/repos/'+search+'/commits')
