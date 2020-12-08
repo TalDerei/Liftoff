@@ -47,5 +47,6 @@ function dataFetch(search){
   })
 }
 
+//dataFetch('Lehigh-Coders-Community/CSE6cubed').then(data=>{console.log(data)})
 
 module.exports = dataFetch;
