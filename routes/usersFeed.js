@@ -25,7 +25,7 @@ router.get('/', (req,res) => {
     	console.log(error);
 	res.status(501).send();
     }
-    res.json(elastic_res.hits.hits[0]);
+    res.json(elastic_res.hits.hits);
 
   });
 });
