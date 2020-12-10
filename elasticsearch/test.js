@@ -7,4 +7,4 @@ client.cluster.health({}, function(error,response,status) {
 });
 
 // run -- 'curl -X GET 'http://localhost:9200/_cluster/stats?'
-// run -- 'node test_file.js' and 'node create.js'
+// run -- 'node test.js' and 'node create.js'
