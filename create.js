@@ -3,7 +3,7 @@
 var client = require('./connection.js');
 
 client.indices.create({  
-  index: 'gov'
+  index: 'sample_index'
 },function(err,resp,status) {
   if(err) {
     console.log(err);

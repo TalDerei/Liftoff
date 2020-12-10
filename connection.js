@@ -1,6 +1,6 @@
 /* connect to elasticsearch production cluster instance on kubernetes */
 
-var elasticsearch=require('elasticsearch');
+var elasticsearch = require('elasticsearch');
 
 var client = new elasticsearch.Client( {  
   hosts: [
