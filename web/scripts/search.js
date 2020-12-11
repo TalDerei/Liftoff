@@ -4,7 +4,7 @@ const results = document.getElementById('search-results');
 
 submitButton.addEventListener('click', (e) => {
   console.log(e.target.value);
-  fetch(`https://liftoff.acm.lehigh.edu/api/project/${e.target.value}`)
+  fetch(`/api/projects?q=${encodeURIComponent(e.target.value)}`)
     .then(response => response.json())
     .then(data => {
       console.log(data);
