@@ -140,7 +140,7 @@ router.put('/:groupname', (req, res) => {
 					}
 
 					// Update the group:
-					pool.query('UPDATE groups SET grouptitle=$1 WHERE groupname=$2 RETURNING *', [data.grouptitle, data.groupname], (err, result) => {
+					pool.query('UPDATE groups SET grouptitle=$1 WHERE groupname=$2 RETURNING *', [data.grouptitle, groupname], (err, result) => {
 						if (err) {
 							console.error('Error in PUT /api/groups:', err);
 							return res.status(500).send(err);
