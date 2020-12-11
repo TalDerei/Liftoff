@@ -35,7 +35,7 @@ lightship.registerShutdownHandler(async () => {
 const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
 const groupsRouter = require('./routes/groups');
-const projectRouter = require('./routes/usersFeed');
+const projectsRouter = require('./routes/usersFeed');
 
 // set network port
 app.set('port', process.env.PORT || 8080);
@@ -55,7 +55,7 @@ groupsRouter.use(passport.authenticate('jwt', { session: false }));
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/groups', groupsRouter);
-app.use('/api/project', projectRouter);
+app.use('/api/projects', projectsRouter);
 
 // Setup static hosting for ./web:
 app.use('/', express.static(path.join(__dirname, 'web')));

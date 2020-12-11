@@ -6,9 +6,11 @@ let client = require('../utils/elastic/connection.js');
 
 
 router.get('/', (req,res) => {
+  if (req.query.q === undefined || req.query.q === null)
+  {
+    return res.status(501).send();
+  }
   let search = req.query.q;
-  if (search == undefined || search == null)
-    res.status(501).send();
   client.search({
     index: 'projects',
     body: {
@@ -21,12 +23,14 @@ router.get('/', (req,res) => {
     }
   },
   (error, elastic_res) => {
-    if (err) {
+    if (error) {
     	console.log(error);
-	res.status(501).send();
+	return res.status(501).send();
     }
-    res.json(elastic_res.hits.hits);
-
+    if (elastic_res.hits === undefined)
+    	return res.json([]);
+    else
+    	return res.json(elastic_res.hits.hits);
   });
 });
 
