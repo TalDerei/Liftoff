@@ -12,7 +12,7 @@ submitButton.addEventListener('click', (e) => {
       for (let result of data) {
         let tagsHTML = "";
         var tagsList = result._source.tags.join();
-        for (let tag of result._source.tags.split(',')) {
+        for (let tag of tagList.split(',')) {
           tagsHTML += `
             <li class="tag">${tag.trim()}</li>
           `;
