@@ -41,6 +41,11 @@ spec:
           image: '{{ .Values.image.repository }}:{{ printf "%s" .Values.image.tag | default .Chart.AppVersion }}'
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: ELASTICSEARCH_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: '{{- include "lehigh-liftoff.fullname" . }}-auth'
+                  key: elastic_host
             - name: GOOGLE_OAUTH_CLIENT_ID
               valueFrom:
                 secretKeyRef:

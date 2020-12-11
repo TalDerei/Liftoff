@@ -34,6 +34,9 @@ postgres:
   port: "[[ CHANGE ME ]]"
   database: "[[ CHANGE ME ]]"
 
+elastic:
+  host: "[[ CHANGE ME ]]"
+
 nameOverride: ""
 fullnameOverride: ""
 

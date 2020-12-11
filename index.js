@@ -40,7 +40,8 @@ app.use(passport.initialize());
 // Import API routes:
 const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
-const groupsRouter = require('./routes/groups')
+const groupsRouter = require('./routes/groups');
+const projectsRouter = require('./routes/usersFeed');
 
 // set network port
 app.set('port', process.env.PORT || 8080);
@@ -48,7 +49,8 @@ app.set('port', process.env.PORT || 8080);
 // Load API routes:
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/groups', groupsRouter)
+app.use('/api/groups', groupsRouter);
+app.use('/api/projects', projectsRouter);
 
 // Setup static hosting for ./web:
 app.use('/', express.static(path.join(__dirname, 'web')));
