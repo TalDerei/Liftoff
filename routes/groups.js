@@ -114,15 +114,30 @@ router.put('/:groupname', (req, res) => {
 // DELETE /groups/[groupname] -- delete group in database associated with groupname
 router.delete('/:groupname', (req, res) => {
 	let groupname = req.params.groupname;
-	pool.query('DELETE FROM groups WHERE groupname = $1', [groupname], (err, result) => {
+
+	// Make sure the user has sufficient permission to operate on the group:
+	pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
 		if (err) {
 			console.error('Error in DELETE /api/groups:', err);
 			return res.status(500).send(err);
 		}
-		if(result.rowCount === 0) {
-			return res.status(404).send(`ERROR: group '${groupname}' not found`);
+
+		// Check permission errors:
+		if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+			return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
 		}
-		return res.status(200).send();
+
+		// Delete the group:
+		pool.query('DELETE FROM groups WHERE groupname = $1', [groupname], (err, result) => {
+			if (err) {
+				console.error('Error in DELETE /api/groups:', err);
+				return res.status(500).send(err);
+			}
+			if(result.rowCount === 0) {
+				return res.status(404).send(`ERROR: group '${groupname}' not found`);
+			}
+			return res.status(200).send();
+		});
 	});
 });
 
