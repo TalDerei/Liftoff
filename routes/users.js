@@ -10,10 +10,15 @@ router.post('/', (req, res) => {
 	if (data.username && data.email && data.realname) {
 		pool.query('INSERT INTO users(username,email,realname) VALUES($1,$2,$3) RETURNING *', [data.username, data.email, data.realname], (err, result) => {
 			if (err) {
+				if(err.code === '23505') {
+					return res.status(409).send(err.detail);
+				}
 				return res.status(500).send(err);
 			}
 			return res.status(202).json(result.rows[0]);
 		});
+	} else {
+		return res.status(400).send('ERROR: "username", "email", and "realname" fields must be included in request');
 	}
 });
 
@@ -22,12 +27,14 @@ router.put('/:username', (req, res) => {
 	let data = req.body;
 	let username = req.params.username;
 	if (data.email && data.realname) {
-		pool.query('UPDATE users SET email=$1,realname=$2, WHERE username = $3 RETURNING *', [data.email, data.realname, username], (err, result) => {
+		pool.query('INSERT INTO users(username,email,realname) VALUES($1,$2,$3) ON CONFLICT ON CONSTRAINT users_pkey DO UPDATE SET email=EXCLUDED.email,realname=EXCLUDED.realname RETURNING *', [username, data.email, data.realname], (err, result) => {
 			if (err) {
 				return res.status(500).send(err);
 			}
 			return res.status(200).json(result.rows[0]);
 		});
+	} else {
+		return res.status(400).send('ERROR: "username", "email", and "realname" fields must be included in request');
 	}
 });
 
@@ -48,6 +55,9 @@ router.delete('/:username', (req, res) => {
 	pool.query('DELETE FROM users WHERE username = $1', [username], (err, result) => {
 		if (err) {
 			return res.status(500).send(err);
+		}
+		if(result.rowCount === 0) {
+			return res.status(404).send(`ERROR: user '${username}' not found`);
 		}
 		return res.status(200).send();
 	});
