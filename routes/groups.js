@@ -47,7 +47,7 @@ router.post('/', (req, res) => {
 			}
 
 			// Now, we need to insert the current user as the default administrator:
-			pool.query('INSERT INTO group_membership(username,groupname,permission) VALUES($1,$2,\'Administrator\')', [req.user.username,groupname], (err) => {
+			pool.query('INSERT INTO group_membership(username,groupname,permission) VALUES($1,$2,\'Administrator\')', [req.user.username,data.groupname], (err) => {
 				if (err) {
 					console.error('Error in PUT /api/groups:', err);
 					return res.status(500).send(err);
@@ -140,7 +140,7 @@ router.put('/:groupname', (req, res) => {
 					}
 
 					// Update the group:
-					pool.query('UPDATE groups SET grouptitle=$1 WHERE groupname=$2 RETURNING *', [groupname, data.grouptitle], (err, result) => {
+					pool.query('UPDATE groups SET grouptitle=$1 WHERE groupname=$2 RETURNING *', [data.grouptitle, data.groupname], (err, result) => {
 						if (err) {
 							console.error('Error in PUT /api/groups:', err);
 							return res.status(500).send(err);
