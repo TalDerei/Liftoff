@@ -1,0 +1,12 @@
+#login-button {
+	display: block;
+	/* background-color: var(--second-color); */
+	border-radius: 0.6rem;
+	border: thick solid var(--second-color);
+	margin: 0vh auto;
+}
+
+#login-button:hover {
+	cursor: pointer;
+}
+
