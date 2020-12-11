@@ -1,0 +1,65 @@
+:root {
+	--first-color: #502d0e;
+	--second-color: #ffce49;
+}
+
+/* Define the modal backdrop: */
+.modal {
+	background-color: rgba(0, 0, 0, 0.25);
+	display: none;
+	height: 100%;
+	left: 0;
+	overflow: auto;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 1;
+}
+
+/* Style the modal box itself: */
+.modal-content {
+	margin: 15% auto;
+	max-width: 750px;
+	padding: 0px 0px;
+	width: 80%;
+}
+
+/* Style the modal close button: */
+.close {
+	color: var(--second-color);
+	float: right;
+	font-size: 32pt;
+	font-weight: bold;
+	padding-right: 1rem;
+	-webkit-text-stroke: 1px black;
+}
+.close:hover, .close:focus {
+	color: #FFFFFF;
+	cursor: pointer;
+}
+
+/* Style the modal Header & Footer: */
+.modal-header {
+	background-color: var(--first-color);
+	border-top-left-radius: 2rem;
+	border-top-right-radius: 2rem;
+	border: 3px solid #101010;
+	font-size: 20pt;
+	font-weight: bold;
+	padding: 2px 16px;
+}
+.modal-header h1 {
+	color: white;
+	padding-left: 1rem;
+}
+
+/* Style the modal Body: */
+.modal-body {
+	background-color: #F0F0F0;
+	border-bottom-left-radius: 2rem;
+	border-bottom-right-radius: 2rem;
+	border: 3px solid #101010;
+	font-size: 16pt;
+	padding: 2px 16px;
+}
+

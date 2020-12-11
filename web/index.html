@@ -5,7 +5,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 		<title>Search</title>
-		<link rel="stylesheet" href="styles/search.css">
+		<link rel="stylesheet" href="styles/modal.css" />
+		<link rel="stylesheet" href="styles/search.css" />
 		<script src="scripts/checkLogin.js" async defer></script>
 		<script src="scripts/search.js" async defer></script>
 	</head>
@@ -13,10 +14,22 @@
 		<div class="container">
 			<h1>Search</h1>
 			<div class="input-submit">
-				<input id="search" name="search" type="text" placeholder="Search here.">
+				<input id="search" name="search" type="text" placeholder="Search here." />
 				<button id="submit">Submit</button>
 			</div>
 			<ul id="search-results"></ul>
+		</div>
+		<div class="modal" id="result-modal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<span class="close">&times;</span>
+					<h1 id="result-title" />
+				</div>
+				<div class="modal-body">
+					<h3 id="result-group" />
+					<p id="result-body" />
+				</div>
+			</div>
 		</div>
 	</body>
 </html>
