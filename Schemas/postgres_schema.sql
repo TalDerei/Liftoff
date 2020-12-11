@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS group_membership (
 	username varchar(255),
 	permission permission_level,
 	PRIMARY KEY(groupname, username),
-	FOREIGN KEY(groupname) REFERENCES groups(groupname),
-	FOREIGN KEY(username) REFERENCES users(username)
+	FOREIGN KEY(groupname) REFERENCES groups(groupname) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY(username) REFERENCES users(username) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
