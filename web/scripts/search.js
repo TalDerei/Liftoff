@@ -52,7 +52,7 @@ submitButton.addEventListener('click', (e) => {
 				let element = document.createElement('li');
 				element.setAttribute('data-description', result._source.description);
 				element.setAttribute('data-title', result._source.title);
-				element.setAttribute('data-title', result._source.group);
+				element.setAttribute('data-group', result._source.group);
 				element.addEventListener('click', displayResultModal);
 
 				// Add the title:
