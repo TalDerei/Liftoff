@@ -17,6 +17,19 @@ router.get('/:groupname', (req, res, next) => {
 	});
 });
 
+// GET /groups/[groupname]/members/[username] -- get group membership in database
+router.get('/:groupname/members/:username', (req, res, next) => {
+	let groupname = req.params.groupname;
+	let username = req.params.username;
+	pool.query('SELECT * FROM group_membership WHERE groupname = $1 AND username = $2', [groupname,username], (err, result) => {
+		if (err) {
+			console.error('Error in GET /api/groups:', err);
+			return res.status(500).send(err);
+		}
+		return res.status(200).json(result.rows[0]);
+	});
+});
+
 // Declare authentication middleware:
 router.use(passport.authenticate('jwt', { session: false }));
 
@@ -45,6 +58,37 @@ router.post('/', (req, res) => {
 		});
 	} else {
 		return res.status(400).send('ERROR: "groupname" and "grouptitle" fields must be included in request');
+	}
+});
+
+// POST /groups/:group/members -- create new group member in database
+router.post('/:groupname/members', (req, res) => {
+	let groupname = req.params.groupname;
+	let data = req.body;
+	if (data.username && data.permission) {
+		// Make sure the user has sufficient permission to operate on the group:
+		pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
+			if (err) {
+				console.error('Error in PUT /api/groups:', err);
+				return res.status(500).send(err);
+			}
+
+			// Check permission errors:
+			if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+				return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
+			}
+
+			// Update the group membership:
+			pool.query('INSERT INTO group_membership(groupname,username,permission) VALUES($1,$2,$3) RETURNING *', [groupname, data.username, data.permission], (err, result) => {
+				if (err) {
+					console.error('Error in POST /api/groups:', err);
+					return res.status(500).send(err);
+				}
+				return res.status(200).send(result.rows[0]);
+			});
+		});
+	} else {
+		return res.status(400).send('ERROR: "username" and "permission" fields must be included in request');
 	}
 });
 
@@ -111,6 +155,38 @@ router.put('/:groupname', (req, res) => {
 	}
 });
 
+// PUT /groups/:group/members -- upsert group member in database
+router.put('/:groupname/members/:username', (req, res) => {
+	let groupname = req.params.groupname;
+	let username = req.params.username;
+	let data = req.body;
+	if (data.permission) {
+		// Make sure the user has sufficient permission to operate on the group:
+		pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
+			if (err) {
+				console.error('Error in PUT /api/groups:', err);
+				return res.status(500).send(err);
+			}
+
+			// Check permission errors:
+			if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+				return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
+			}
+
+			// Update the group membership:
+			pool.query('INSERT INTO group_membership(groupname,username,permission) VALUES($1,$2,$3) ON CONFLICT ON CONSTRAINT group_membership_pkey DO UPDATE SET permission=$3 RETURNING *', [groupname, username, data.permission], (err, result) => {
+				if (err) {
+					console.error('Error in PUT /api/groups:', err);
+					return res.status(500).send(err);
+				}
+				return res.status(200).send(result.rows[0]);
+			});
+		});
+	} else {
+		return res.status(400).send('ERROR: "permission" fields must be included in request');
+	}
+});
+
 // DELETE /groups/[groupname] -- delete group in database associated with groupname
 router.delete('/:groupname', (req, res) => {
 	let groupname = req.params.groupname;
@@ -140,6 +216,34 @@ router.delete('/:groupname', (req, res) => {
 		});
 	});
 });
+
+// DELETE /groups/:group/members -- delete group member in database
+router.delete('/:groupname/members/:username', (req, res) => {
+	let groupname = req.params.groupname;
+	let username = req.params.username;
+	// Make sure the user has sufficient permission to operate on the group:
+	pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
+		if (err) {
+			console.error('Error in PUT /api/groups:', err);
+			return res.status(500).send(err);
+		}
+
+		// Check permission errors:
+		if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+			return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
+		}
+
+		// Update the group membership:
+		pool.query('DELETE FROM group_membership WHERE groupname=$1 AND username=$2', [groupname, username], (err, result) => {
+			if (err) {
+				console.error('Error in DELETE /api/groups:', err);
+				return res.status(500).send(err);
+			}
+			return res.status(200).send();
+		});
+	});
+});
+
 
 module.exports = router;
 
