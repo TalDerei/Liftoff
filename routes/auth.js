@@ -3,12 +3,20 @@ const passport = require('passport');
 const passportJwt = require('passport-jwt');
 const jwt = require('jsonwebtoken');
 const google = require('googleapis').google;
+const pool = require('../utils/postgres');
 
 const router = express.Router();
 
 // Define the JWT options:
 const JWT_OPTS = {
-	jwtFromRequest: passportJwt.ExtractJwt.fromAuthHeaderAsBearerToken(),
+	jwtFromRequest: passportJwt.ExtractJwt.fromExtractors([
+		// Define a method to extract the login token from the 'jwt' cookie, but fall back to the auth header if no cookies are found:
+		function(req) {
+			if(req && req.cookies)
+				return req.cookies['jwt'];
+		},
+		passportJwt.ExtractJwt.fromAuthHeaderAsBearerToken()
+	]),
 	secretOrKey: process.env['JWT_SECRET'].replace(/\s/g, '')
 };
 
@@ -21,13 +29,8 @@ const OAUTH_OPTS = {
 
 // Setup the new JWT strategy:
 passport.use(new passportJwt.Strategy(JWT_OPTS, function(payload, done) {
-	return done(null, payload);
+	done(null, payload);
 }));
-
-// Define a route for obtaining the OAuth ID:
-router.get('/oauth-id', function(req, res) {
-	res.status(200).send(OAUTH_OPTS.clientId);
-});
 
 // Define the authentication route:
 router.get('/google', function(req, res) {
@@ -52,13 +55,28 @@ router.get('/google', function(req, res) {
 				return res.status(500).send('ERROR: Failed to validate user information');
 			}
 
-			// Return a signed JWT with the user's information:
-			const jwtToken = jwt.sign({
-				id: userInfo.data.id,
-				email: userInfo.data.email,
-				name: userInfo.data.name
-			}, JWT_OPTS.secretOrKey);
-			res.send(JSON.stringify({ token: jwtToken }));
+			// Query the users table to find the user in question:
+			pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [ userInfo.data.email ], (err, result) => {
+				// If the user is not found, return an error:
+				if(result.rowCount !== 1)
+					return res.status(404).send(`Could not find user with email ${userInfo.data.email} in database`);
+
+				// Construct a signed JWT with the user's information:
+				const jwtToken = jwt.sign({
+					email: userInfo.data.email,
+					realname: result.rows[0].realname,
+					username: result.rows[0].username
+				}, JWT_OPTS.secretOrKey, {
+					expiresIn: "4d"
+				});
+
+				// Return a signed JWT with the user's information:
+				res.cookie('jwt', jwtToken, {
+					maxAge: 3 * 24 * 60 * 60 * 1000, // expire in 3 days
+					sameSite: true
+				});
+				res.sendStatus(200);
+			});
 		});
 	}).catch(function(error) {
 		// Something went wrong:
@@ -66,6 +84,19 @@ router.get('/google', function(req, res) {
 		console.error(error);
 		res.status(500).send('ERROR: Failed to process token');
 	});
+});
+
+// Define a route for obtaining the OAuth ID:
+router.get('/oauth-id', function(req, res) {
+	res.status(200).send(OAUTH_OPTS.clientId);
+});
+
+// Declare authentication middleware:
+router.use(passport.authenticate('jwt', { session: false }));
+
+// Define a route for obtaining the OAuth ID:
+router.get('/whoami', function(req, res) {
+	res.status(200).send({ username: req.user.username });
 });
 
 module.exports = router;
