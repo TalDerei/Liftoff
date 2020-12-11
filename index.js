@@ -2,7 +2,7 @@
 
 // Load dependencies:
 const bodyParser = require('body-parser');
-const delay = require('delay');
+const cookieParser = require('cookie-parser');
 const express = require('express');
 const http = require('http');
 const httpShutdown = require('http-shutdown');
@@ -31,6 +31,12 @@ lightship.registerShutdownHandler(async () => {
 	});
 });
 
+// Load Middleware:
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true,}));
+app.use(cookieParser());
+app.use(passport.initialize());
+
 // Import API routes:
 const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
@@ -39,17 +45,6 @@ const projectsRouter = require('./routes/usersFeed');
 
 // set network port
 app.set('port', process.env.PORT || 8080);
-
-// middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true,}));
-app.use(passport.initialize());
-
-// Configure route-level authentication:
-usersRouter.use(passport.authenticate('jwt', { session: false }));
-groupsRouter.use(passport.authenticate('jwt', { session: false }));
 
 // Load API routes:
 app.use('/api/auth', authRouter);

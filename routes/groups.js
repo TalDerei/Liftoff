@@ -1,8 +1,24 @@
 /* routes associated with group */
 
 const express = require('express');
+const passport = require('passport');
 const pool = require('../utils/postgres');
 const router = express.Router();
+
+// GET /groups/[groupname] -- get group in database associated with groupname
+router.get('/:groupname', (req, res, next) => {
+	let groupname = req.params.groupname;
+	pool.query('SELECT * FROM groups WHERE groupname = $1', [groupname], (err, result) => {
+		if (err) {
+			console.error('Error in GET /api/groups:', err);
+			return res.status(500).send(err);
+		}
+		return res.status(200).json(result.rows[0]);
+	});
+});
+
+// Declare authentication middleware:
+router.use(passport.authenticate('jwt', { session: false }));
 
 // POST /groups -- create new group in database
 router.post('/', (req, res) => {
@@ -13,9 +29,19 @@ router.post('/', (req, res) => {
 				if(err.code === '23505') {
 					return res.status(409).send(err.detail);
 				}
+				console.error('Error in POST /api/groups:', err);
 				return res.status(500).send(err);
 			}
-			return res.status(202).json(result.rows[0]);
+
+			// Now, we need to insert the current user as the default administrator:
+			pool.query('INSERT INTO group_membership(username,groupname,permission) VALUES($1,$2,\'Administrator\')', [req.user.username,groupname], (err) => {
+				if (err) {
+					console.error('Error in PUT /api/groups:', err);
+					return res.status(500).send(err);
+				}
+
+				return res.status(202).json(result.rows[0]);
+			});
 		});
 	} else {
 		return res.status(400).send('ERROR: "groupname" and "grouptitle" fields must be included in request');
@@ -24,43 +50,94 @@ router.post('/', (req, res) => {
 
 // PUT /groups/[groupname] -- update group in database associated with groupname
 router.put('/:groupname', (req, res) => {
-	let data = req.body;
-	let groupname = req.params.groupname;
+	const data = req.body;
+	const groupname = req.params.groupname;
+
+	// IMPORTANT: [Buckley Ross]: This next section has the potential to cause a data-race if we're not careful.
+	//	It'll work well enough for our demo, but we really need to move all of this logic out to a stored procedure
+	//	before we release this to the public.
 	if (data.grouptitle) {
-		pool.query('INSERT INTO groups(groupname,grouptitle) VALUES($1,$2) ON CONFLICT ON CONSTRAINT groups_pkey DO UPDATE SET grouptitle=EXCLUDED.grouptitle RETURNING *', [groupname, data.grouptitle], (err, result) => {
+		// First, check whether or not the group exists:
+		pool.query('SELECT COUNT(*) FROM groups WHERE groupname=$1', [ groupname ], (err, result) => {
 			if (err) {
+				console.error('Error in PUT /api/groups:', err);
 				return res.status(500).send(err);
 			}
-			console.log(result);
-			return res.status(200).json(result.rows[0]);
+
+			if(result.rows[0].count === '0') {
+				// The group was not found; time to insert it:
+				pool.query('INSERT INTO groups(groupname,grouptitle) VALUES($1,$2) RETURNING *', [groupname, data.grouptitle], (err, resutlt) => {
+					if (err) {
+						console.error('Error in PUT /api/groups:', err);
+						return res.status(500).send(err);
+					}
+
+					// Now, we need to insert the current user as the default administrator:
+					pool.query('INSERT INTO group_membership(username,groupname,permission) VALUES($1,$2,\'Administrator\')', [req.user.username,groupname], (err) => {
+						if (err) {
+							console.error('Error in PUT /api/groups:', err);
+							return res.status(500).send(err);
+						}
+
+						return res.status(202).json(result.rows[0]);
+					});
+				});
+			} else {
+				// The group was found; we need to make sure the user has sufficient permission to operate on the group:
+				pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
+					if (err) {
+						console.error('Error in PUT /api/groups:', err);
+						return res.status(500).send(err);
+					}
+
+					// Check permission errors:
+					if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+						return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
+					}
+
+					// Update the group:
+					pool.query('UPDATE groups SET grouptitle=$1 WHERE groupname=$2 RETURNING *', [groupname, data.grouptitle], (err, result) => {
+						if (err) {
+							console.error('Error in PUT /api/groups:', err);
+							return res.status(500).send(err);
+						}
+						return res.status(200).send(result.rows[0]);
+					});
+				});
+			}
 		});
 	} else {
-		return res.status(400).send('ERROR: "groupname" field must be included in request');
+		return res.status(400).send('ERROR: "grouptitle" field must be included in request');
 	}
-});
-
-// GET /groups/[groupname] -- get group in database associated with groupname
-router.get('/:groupname', (req, res, next) => {
-	let groupname = req.params.groupname;
-	pool.query('SELECT * FROM groups WHERE groupname = $1', [groupname], (err, result) => {
-		if (err) {
-			return res.status(500).send(err);
-		}
-		return res.status(200).json(result.rows[0]);
-	});
 });
 
 // DELETE /groups/[groupname] -- delete group in database associated with groupname
 router.delete('/:groupname', (req, res) => {
 	let groupname = req.params.groupname;
-	pool.query('DELETE FROM groups WHERE groupname = $1', [groupname], (err, result) => {
+
+	// Make sure the user has sufficient permission to operate on the group:
+	pool.query('SELECT permission FROM group_membership WHERE username=$1 AND groupname=$2', [req.user.username,groupname], (err, result) => {
 		if (err) {
+			console.error('Error in DELETE /api/groups:', err);
 			return res.status(500).send(err);
 		}
-		if(result.rowCount === 0) {
-			return res.status(404).send(`ERROR: group '${groupname}' not found`);
+
+		// Check permission errors:
+		if(result.rowCount !== 1 || result.rows[0].permission !== 'Administrator') {
+			return res.status(403).send('ERROR: You must be an administrator to update a group\'s profile');
 		}
-		return res.status(200).send();
+
+		// Delete the group:
+		pool.query('DELETE FROM groups WHERE groupname = $1', [groupname], (err, result) => {
+			if (err) {
+				console.error('Error in DELETE /api/groups:', err);
+				return res.status(500).send(err);
+			}
+			if(result.rowCount === 0) {
+				return res.status(404).send(`ERROR: group '${groupname}' not found`);
+			}
+			return res.status(200).send();
+		});
 	});
 });
 
