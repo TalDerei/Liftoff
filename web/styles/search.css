@@ -38,6 +38,14 @@ body {
   margin: 1rem;
 }
 
+.group-description {
+  display: block;
+  width: 870px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 ul {
   list-style-type: none;
   padding-inline-start: 0;
